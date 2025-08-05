@@ -1,31 +1,22 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isAuth() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    // Protect the users collection
-    match /users/{userId} {
-      // Admins can read/write any user document.
-      // Members can only read/write their own document.
-      allow read, write: if isAuth() && (request.auth.uid == userId || isAdmin());
-
-      // Only admins can create or delete user documents.
-      allow create, delete: if isAdmin();
-    }
-
-    // Deny all other reads/writes by default
+    // By default, deny all access
     match /{document=**} {
       allow read, write: if false;
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Allow a user to create their own document
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow a user to read or update their own document
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+
+      // Allow admins to read, write, and delete any user document
+      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
   }
 }
