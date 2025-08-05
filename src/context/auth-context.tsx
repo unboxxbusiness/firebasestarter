@@ -1,44 +1,95 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
 
-interface User {
-  email: string;
+interface AppUser {
+  uid: string;
+  email: string | null;
   role: "admin" | "member";
+  firstName?: string;
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   loading: boolean;
-  login: (user: User) => void;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    // In a real app, you'd check for a token in localStorage or a cookie
-    // For this mock, we'll just initialize as logged out
-    setLoading(false);
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/firebase.User
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
 
-  const login = (userData: User) => {
-    setUser(userData);
-    // In a real app, you'd also set a token here
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            role: userData.role || "member",
+            firstName: userData.firstName,
+          });
+
+          // Redirect based on role
+          if (userData.role === 'admin') {
+            router.push('/admin');
+          } else {
+            router.push('/member');
+          }
+
+        } else {
+          // User exists in Auth but not in Firestore, log them out
+           await signOut(auth);
+           setUser(null);
+        }
+      } else {
+        // User is signed out
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [router]);
+
+  const login = async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email, password);
+    // onAuthStateChanged will handle the rest
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await signOut(auth);
     setUser(null);
-    // In a real app, you'd also clear the token here
+    router.push('/auth/login');
   };
+
+  const value = { user, loading, login, logout };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {loading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <p>Loading...</p>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }

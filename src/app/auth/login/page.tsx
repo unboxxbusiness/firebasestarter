@@ -1,9 +1,11 @@
+
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
+import { FirebaseError } from "firebase/app";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,31 +18,54 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const { login } = useAuth();
+  const [email, setEmail] = useState("admin@example.com");
+  const [password, setPassword] = useState("password");
+  const [isLoading, setIsLoading] = useState(false);
+  const { login, user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleLogin = () => {
-    // This is a mock login.
-    // In a real app, you'd validate credentials against a backend.
-    if (email.includes("admin")) {
-      login({ email, role: "admin" });
-      router.push("/admin/dashboard");
-    } else if (email.includes("member")) {
-      login({ email, role: "member" });
-      router.push("/member/dashboard");
-    } else {
+  const handleLogin = async () => {
+    setIsLoading(true);
+    try {
+      await login(email, password);
+    } catch (error) {
+      console.error(error);
+      let description = "An unexpected error occurred. Please try again.";
+      if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case "auth/user-not-found":
+          case "auth/wrong-password":
+          case "auth/invalid-credential":
+            description = "Invalid email or password. Please try again.";
+            break;
+          default:
+            description = "An authentication error occurred. Please try again later.";
+            break;
+        }
+      }
       toast({
         variant: "destructive",
-        title: "Invalid Credentials",
-        description: "Please use an email containing 'admin' or 'member' to log in.",
+        title: "Login Failed",
+        description,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // Redirect if user is already logged in
+  if (user) {
+    if (user.role === 'admin') {
+      router.push('/admin');
+    } else {
+      router.push('/member');
+    }
+    return null; // Render nothing while redirecting
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -48,8 +73,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account. <br/>
-            (Use 'admin@example.com' or 'member@example.com')
+            Enter your email below to login to your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -83,7 +107,8 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <Button onClick={handleLogin} className="w-full">
+            <Button onClick={handleLogin} disabled={isLoading} className="w-full">
+              {isLoading && <Loader2 className="animate-spin mr-2" />}
               Login
             </Button>
           </div>
