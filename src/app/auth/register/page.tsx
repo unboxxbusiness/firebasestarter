@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, collection, getDocs, query, limit } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
@@ -42,25 +42,37 @@ export default function RegisterPage() {
     }
     setIsLoading(true);
     try {
+      // Check if any user exists to determine the role
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, limit(1));
+      const querySnapshot = await getDocs(q);
+      const isFirstUser = querySnapshot.empty;
+      const role = isFirstUser ? "admin" : "member";
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Add user to Firestore
+      // Add user to Firestore with the determined role
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: user.email,
         firstName,
         lastName,
-        role: "member", // Default role
+        role, // Use the dynamically determined role
         createdAt: new Date(),
       });
 
       toast({
         title: "Registration Successful",
-        description: "You have successfully created an account.",
+        description: `Your account has been created with the role: ${role}.`,
       });
 
-      router.push("/member/dashboard");
+      // Redirect to the appropriate dashboard
+      if (role === 'admin') {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/member/dashboard");
+      }
 
     } catch (error) {
       console.error("Registration error:", error);
