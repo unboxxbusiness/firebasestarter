@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,9 +25,11 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 p-6">
-            <Button asChild size="lg" className="font-bold">
-              <Link href="/auth/login">Get Started</Link>
-            </Button>
+             <Link href="/auth/login" passHref legacyBehavior>
+                <Button as="a" size="lg" className="font-bold w-full">
+                    Get Started
+                </Button>
+             </Link>
           </CardContent>
         </Card>
       </div>
