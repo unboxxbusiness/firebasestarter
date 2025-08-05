@@ -7,10 +7,12 @@ import {
   User,
   LayoutDashboard,
   Users,
+  HandCoins,
+  ArrowLeftRight,
+  UserCog,
 } from "lucide-react";
 
 import {
-  Sidebar,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
@@ -18,10 +20,52 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Icons } from "@/components/icons";
-import { Button } from "@/components/ui/button";
+
+const adminNavItems = [
+  {
+    href: "/admin/dashboard",
+    icon: LayoutDashboard,
+    label: "Dashboard",
+  },
+  {
+    href: "/admin/users",
+    icon: Users,
+    label: "Users",
+  },
+  {
+    href: "/admin/loans",
+    icon: HandCoins,
+    label: "Loans",
+  },
+];
+
+const memberNavItems = [
+  {
+    href: "/member/dashboard",
+    icon: LayoutDashboard,
+    label: "Dashboard",
+  },
+  {
+    href: "/member/transactions",
+    icon: ArrowLeftRight,
+    label: "Transactions",
+  },
+  {
+    href: "/member/profile",
+    icon: UserCog,
+    label: "Profile",
+  },
+];
+
 
 export function DashboardNav() {
   const pathname = usePathname();
+
+  const isMemberRoute = pathname.startsWith('/member');
+
+  const navItems = isMemberRoute ? memberNavItems : adminNavItems;
+  const homeRoute = isMemberRoute ? "/member" : "/admin";
+
 
   return (
     <>
@@ -32,30 +76,20 @@ export function DashboardNav() {
         </div>
       </SidebarHeader>
       <SidebarMenu className="flex-1">
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={pathname.startsWith("/admin")}
-            tooltip="Admin Dashboard"
-          >
-            <Link href="/admin">
-              <LayoutDashboard />
-              Admin
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={pathname.startsWith("/member")}
-            tooltip="Member Dashboard"
-          >
-            <Link href="/member">
-              <User />
-              Member
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+        {navItems.map((item) => (
+          <SidebarMenuItem key={item.href}>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname.startsWith(item.href)}
+              tooltip={item.label}
+            >
+              <Link href={item.href}>
+                <item.icon />
+                {item.label}
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
       </SidebarMenu>
       <SidebarFooter>
         <SidebarMenuItem>

@@ -25,10 +25,10 @@ export default function Home() {
           </CardHeader>
           <CardContent className="grid gap-4 p-6">
             <Button asChild size="lg" className="font-bold">
-              <Link href="/admin">Admin Login</Link>
+              <Link href="/auth/login">Admin Login</Link>
             </Button>
             <Button asChild size="lg" variant="secondary" className="font-bold">
-              <Link href="/member">Member Login</Link>
+              <Link href="/auth/login">Member Login</Link>
             </Button>
           </CardContent>
         </Card>

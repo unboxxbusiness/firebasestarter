@@ -1,7 +1,7 @@
 import { Sidebar, SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardNav } from "@/components/dashboard-nav";
 
-export default function DashboardLayout({
+export default function MemberLayout({
   children,
 }: {
   children: React.ReactNode;
