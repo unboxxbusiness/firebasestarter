@@ -1,4 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth-context";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,15 +15,41 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { login } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleLogin = () => {
+    // This is a mock login.
+    // In a real app, you'd validate credentials against a backend.
+    if (email.includes("admin")) {
+      login({ email, role: "admin" });
+      router.push("/admin/dashboard");
+    } else if (email.includes("member")) {
+      login({ email, role: "member" });
+      router.push("/member/dashboard");
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Invalid Credentials",
+        description: "Please use an email containing 'admin' or 'member' to log in.",
+      });
+    }
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen">
       <Card className="mx-auto max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your email below to login to your account. <br/>
+            (Use 'admin@example.com' or 'member@example.com')
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -30,6 +61,8 @@ export default function LoginPage() {
                 type="email"
                 placeholder="m@example.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
@@ -42,9 +75,15 @@ export default function LoginPage() {
                   Forgot your password?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
-            <Button type="submit" className="w-full">
+            <Button onClick={handleLogin} className="w-full">
               Login
             </Button>
           </div>

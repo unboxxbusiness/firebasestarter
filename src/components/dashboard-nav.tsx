@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LogOut,
-  User,
   LayoutDashboard,
   Users,
   HandCoins,
@@ -20,6 +19,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Icons } from "@/components/icons";
+import { useAuth } from "@/context/auth-context";
 
 const adminNavItems = [
   {
@@ -60,12 +60,16 @@ const memberNavItems = [
 
 export function DashboardNav() {
   const pathname = usePathname();
+  const { logout } = useAuth();
+  const router = useRouter();
 
   const isMemberRoute = pathname.startsWith('/member');
-
   const navItems = isMemberRoute ? memberNavItems : adminNavItems;
-  const homeRoute = isMemberRoute ? "/member" : "/admin";
-
+  
+  const handleLogout = () => {
+    logout();
+    router.push('/auth/login');
+  };
 
   return (
     <>
@@ -93,11 +97,9 @@ export function DashboardNav() {
       </SidebarMenu>
       <SidebarFooter>
         <SidebarMenuItem>
-          <SidebarMenuButton asChild>
-            <Link href="/">
-              <LogOut />
-              Logout
-            </Link>
+          <SidebarMenuButton onClick={handleLogout}>
+            <LogOut />
+            Logout
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarFooter>
