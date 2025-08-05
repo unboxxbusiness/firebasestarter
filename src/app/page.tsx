@@ -25,8 +25,8 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 p-6">
-             <Link href="/auth/login" passHref legacyBehavior>
-                <Button as="a" size="lg" className="font-bold w-full">
+             <Link href="/auth/login">
+                <Button size="lg" className="font-bold w-full">
                     Get Started
                 </Button>
              </Link>
